@@ -1,0 +1,8 @@
+Flask
+gunicorn
+pandas
+pdfplumber
+PyMuPDF
+openpyxl
+matplotlib
+seaborn
