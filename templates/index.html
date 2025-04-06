@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ARG Analyzer</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #f0f0f0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    h1 {
+      color: #00c6ff;
+      margin-bottom: 0.5rem;
+    }
+
+    h3 {
+      color: #aaa;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .drop-zone {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      border: 2px dashed #00c6ff;
+      padding: 1.5rem;
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+      max-width: 400px;
+      width: 100%;
+      min-height: 120px;
+      box-sizing: border-box;
+      transition: background 0.2s;
+    }
+
+    .drop-zone:hover {
+      background-color: rgba(0, 198, 255, 0.05);
+    }
+
+    .drop-text {
+      font-size: 1rem;
+      padding: 0.5rem;
+      color: #f0f0f0;
+      max-width: 90%;
+      word-wrap: break-word;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .button {
+      margin-top: 1rem;
+      padding: 0.6rem 1.2rem;
+      background-color: #00c6ff;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .button:hover {
+      background-color: #00a6dd;
+    }
+
+    .button.full-width {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .error {
+      color: #ff6b6b;
+      margin-top: 1rem;
+    }
+
+    #file-list {
+      list-style: none;
+      padding: 0;
+      margin-top: 1rem;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    #file-list li {
+      background: #1e1e1e;
+      margin-bottom: 0.4rem;
+      padding: 0.5rem;
+      border-radius: 5px;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    #loading {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      font-size: 1.2rem;
+      color: #00c6ff;
+    }
+
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-top: 4px solid #00c6ff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 1rem auto;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 480px) {
+      .drop-zone {
+        padding: 1rem;
+      }
+
+      .drop-text {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>ARG Analyzer</h1>
+  <h3>Upload ARG PDFs to Generate Results</h3>
+
+  <div id="upload-form">
+  <form method="POST" enctype="multipart/form-data">
+
+    <!-- Upload input -->
+    <label for="file-input" class="drop-zone" id="drop-zone">
+      <span class="drop-text">Drop PDFs here or tap to upload</span>
+      <input type="file" id="file-input" name="pdfs" multiple />
+    </label>
+
+    <ul id="file-list"></ul>
+
+    <!-- Checkbox list for previous PDFs -->
+    {% if recent_pdfs %}
+    <div style="margin-top: 1.5rem; max-width: 400px; width: 100%;">
+      <div class="panel-header" onclick="togglePanel(this)" style="background: #1e1e1e; padding: 0.6rem 1rem; font-weight: bold; cursor: pointer; color: #00c6ff; border-radius: 6px; text-align: center;">
+        Use a Previously Uploaded PDF
+      </div>
+      <div class="panel-body" style="background: #181818; padding: 1rem; display: none; border-radius: 0 0 6px 6px; border-top: 1px solid #333;">
+        {% for display_name, saved_name in recent_pdfs %}
+        <label style="display: block; margin-bottom: 0.4rem; cursor: pointer;">
+          <input type="checkbox" name="existing_pdfs" value="{{ saved_name }}" />
+          {{ display_name }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Submit -->
+    <button type="submit" class="button full-width">Generate</button>
+  </form>
+  </div>
+
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+  </div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Generating your report...</p>
+    <p id="quote" style="font-style: italic;"></p>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById("drop-zone");
+    const fileInput = document.getElementById("file-input");
+    const fileList = document.getElementById("file-list");
+
+    const quotes = [
+      "Crunching shifts like pros...",
+      "Summoning the ARG gods...",
+      "Shifts are aligning...",
+      "Liam is frantically typing..",
+      "ARGX is forging your files..."
+    ];
+
+    document.querySelector("form").addEventListener("submit", function () {
+      document.getElementById("upload-form").style.display = "none";
+      document.getElementById("loading").style.display = "block";
+      document.getElementById("quote").textContent = quotes[Math.floor(Math.random() * quotes.length)];
+    });
+
+    fileInput.addEventListener("change", () => {
+      fileList.innerHTML = "";
+      [...fileInput.files].forEach(file => {
+        const li = document.createElement("li");
+        li.textContent = file.name;
+        fileList.appendChild(li);
+      });
+    });
+
+    dropZone.addEventListener("dragover", e => {
+      e.preventDefault();
+      dropZone.style.backgroundColor = "rgba(0,198,255,0.1)";
+    });
+
+    dropZone.addEventListener("dragleave", e => {
+      e.preventDefault();
+      dropZone.style.backgroundColor = "";
+    });
+
+    dropZone.addEventListener("drop", e => {
+      e.preventDefault();
+      fileInput.files = e.dataTransfer.files;
+      fileInput.dispatchEvent(new Event("change"));
+      dropZone.style.backgroundColor = "";
+    });
+  </script>
+
+  <script>
+  function togglePanel(header) {
+    const body = header.nextElementSibling;
+    body.style.display = (body.style.display === "none" || !body.style.display) ? "block" : "none";
+  }
+  </script>
+  
+</body>
+</html>
