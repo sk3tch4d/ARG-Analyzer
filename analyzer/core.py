@@ -47,7 +47,11 @@ output_xlsx = os.path.join("/tmp", f"ARGX_{first_date}.xlsx")
 heatmap_path = generate_heatmap_png(df, first_date)
 write_argx_v2(df, output_xlsx)
 
-return [output_xlsx, heatmap_path], {}
+swaps = detect_shift_swaps(df.to_dict(orient="records"))
+return [output_xlsx, heatmap_path], {
+    "total": len(df),
+    "swaps": swaps
+}
 
 Future: detect_shift_swaps(df) to be implemented
 
