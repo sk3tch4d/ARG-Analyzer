@@ -1,9 +1,14 @@
-import os import re import uuid from flask import Flask, request, render_template, send_file from analyzer.core import generate_argx_and_heatmap
+import os
+import re
+import uuid
+from flask import Flask, request, render_template, send_file
+from analyzer.core import generate_argx_and_heatmap
 
-UPLOAD_FOLDER = "/tmp/uploads" MAX_PDFS = 5
+UPLOAD_FOLDER = "/tmp/uploads"
+MAX_PDFS = 5
 
-app = Flask(__name__) os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
+app = Flask(__name__)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def format_pdf_display_name(filename): match = re.search(r"(\d{4}-\d{2}-\d{2})", filename) date_str = match.group(1) if match else "Unknown" return f"ARG_{date_str}.pdf", filename
 
 @app.route("/", methods=["GET", "POST"]) def index(): # === List recent PDFs === recent_pdfs_raw = sorted( [f for f in os.listdir(UPLOAD_FOLDER) if f.endswith(".pdf")], key=lambda f: os.path.getmtime(os.path.join(UPLOAD_FOLDER, f)), reverse=True )[:MAX_PDFS] recent_pdfs = [format_pdf_display_name(f) for f in recent_pdfs_raw]
